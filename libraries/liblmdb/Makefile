@@ -41,7 +41,7 @@ IHDRS	= lmdb.h
 ILIBS	= liblmdb.a liblmdb$(SOEXT)
 IPROGS	= mdb_stat mdb_copy mdb_dump mdb_load
 IDOCS	= mdb_stat.1 mdb_copy.1 mdb_dump.1 mdb_load.1
-PROGS	= $(IPROGS) mtest mtest2 mtest3 mtest4 mtest5
+PROGS	= $(IPROGS) mtest mtest2 mtest3 mtest4 mtest5 mtest6
 all:	$(ILIBS) $(PROGS)
 
 install: $(ILIBS) $(IPROGS) $(IHDRS)
@@ -59,7 +59,7 @@ clean:
 
 test:	all
 	rm -rf testdb && mkdir testdb
-	./mtest && ./mdb_stat testdb
+	./mtest && ./mtest6 && ./mdb_stat testdb
 
 liblmdb.a:	mdb.o midl.o
 	$(AR) rs $@ mdb.o midl.o

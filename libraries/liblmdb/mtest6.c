@@ -26,18 +26,31 @@
 
 char dkbuf[1024];
 
+static char *
+show_key(MDB_val *key, char *buf)
+{
+	char *ptr = buf;
+	unsigned char *c = key->mv_data;
+	size_t i;
+
+	if (!key)
+		return "";
+	buf[0] = '\0';
+	for (i = 0; i < key->mv_size; i++)
+		ptr += sprintf(ptr, "%02x", c[i]);
+	return buf;
+}
+
 int main(int argc,char * argv[])
 {
-	int i = 0, j = 0, rc;
+	int i = 0, rc;
 	MDB_env *env;
 	MDB_dbi dbi;
 	MDB_val key, data, sdata;
 	MDB_txn *txn;
 	MDB_stat mst;
 	MDB_cursor *cursor;
-	int count;
-	int *values;
-	long kval;
+	unsigned long kval;
 	char *sval;
 
 	srand(time(NULL));
@@ -60,22 +73,22 @@ int main(int argc,char * argv[])
 
 	printf("Adding 12 values, should yield 3 splits\n");
 	for (i=0;i<12;i++) {
-		kval = i*5;
-		sprintf(sval, "%08x", kval);
+		kval = (unsigned long)i*5;
+		sprintf(sval, "%08lx", kval);
 		data = sdata;
 		(void)RES(MDB_KEYEXIST, mdb_cursor_put(cursor, &key, &data, MDB_NOOVERWRITE));
 	}
 	printf("Adding 12 more values, should yield 3 splits\n");
 	for (i=0;i<12;i++) {
-		kval = i*5+4;
-		sprintf(sval, "%08x", kval);
+		kval = (unsigned long)i*5+4;
+		sprintf(sval, "%08lx", kval);
 		data = sdata;
 		(void)RES(MDB_KEYEXIST, mdb_cursor_put(cursor, &key, &data, MDB_NOOVERWRITE));
 	}
 	printf("Adding 12 more values, should yield 3 splits\n");
 	for (i=0;i<12;i++) {
-		kval = i*5+1;
-		sprintf(sval, "%08x", kval);
+		kval = (unsigned long)i*5+1;
+		sprintf(sval, "%08lx", kval);
 		data = sdata;
 		(void)RES(MDB_KEYEXIST, mdb_cursor_put(cursor, &key, &data, MDB_NOOVERWRITE));
 	}
@@ -83,7 +96,7 @@ int main(int argc,char * argv[])
 
 	do {
 		printf("key: %p %s, data: %p %.*s\n",
-			key.mv_data,  mdb_dkey(&key, dkbuf),
+			key.mv_data, show_key(&key, dkbuf),
 			data.mv_data, (int) data.mv_size, (char *) data.mv_data);
 	} while ((rc = mdb_cursor_get(cursor, &key, &data, MDB_NEXT)) == 0);
 	CHECK(rc == MDB_NOTFOUND, "mdb_cursor_get");

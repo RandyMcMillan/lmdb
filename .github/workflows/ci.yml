@@ -5,9 +5,30 @@ on:
     branches: [master, main]
   pull_request:
     branches: [master, main]
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Platform to run manually
+        type: choice
+        options:
+          - all
+          - ubuntu-latest
+          - macos-latest
+        default: all
+        required: true
+      run_tests:
+        description: Run the test suite
+        type: boolean
+        default: true
+        required: true
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
+    if: github.event_name != 'workflow_dispatch' || inputs.platform == 'all' || inputs.platform == matrix.os
     strategy:
       fail-fast: false
       matrix:
@@ -18,6 +39,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Fetch upstream and print diff
+        continue-on-error: true
+        run: |
+          git remote get-url upstream >/dev/null 2>&1 || \
+            git remote add upstream https://github.com/lmdb/lmdb.git
+          git fetch upstream || true
+          git diff --no-ext-diff upstream/HEAD...HEAD || \
+            git diff --no-ext-diff || true
+
       - name: Install dependencies (Ubuntu)
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y build-essential
@@ -26,4 +56,5 @@ jobs:
         run: cd libraries/liblmdb && make
 
       - name: Run tests
+        if: github.event_name != 'workflow_dispatch' || inputs.run_tests
         run: cd libraries/liblmdb && make test

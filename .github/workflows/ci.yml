@@ -26,6 +26,9 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   build:
     if: github.event_name != 'workflow_dispatch' || inputs.platform == 'all' || inputs.platform == matrix.os
